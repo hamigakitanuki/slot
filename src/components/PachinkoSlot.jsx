@@ -154,10 +154,66 @@ const PachinkoSlot = () => {
     setTimeout(() => oscillator.stop(), 50);
   };
 
+  // シンボル定義
+  const SYMBOLS = {
+    SEVEN: {
+      icon: '㊗️',
+      prize: 300,
+      probability: 1/200,
+      sound: playSevenSound,
+      message: '㊗️㊗️㊗️ (+300)'
+    },
+    BAR: {
+      icon: '📼',
+      prize: 100,
+      probability: 1/100,
+      sound: playBarSound,
+      message: '📼📼📼 (+100)'
+    },
+    BELL: {
+      icon: '🔔',
+      prize: 15,
+      probability: 1/60,
+      sound: playBellSound,
+      message: '🔔🔔🔔 (+15)'
+    },
+    WATERMELON: {
+      icon: '🍉',
+      prize: 8,
+      probability: 1/50,
+      sound: playWatermelonSound,
+      message: '🍉🍉🍉 (+8)'
+    },
+    CHERRY: {
+      icon: '🍒',
+      prize: 4,
+      probability: 1/50,
+      sound: playCherry,
+      message: '🍒 (+4)',
+      singleReel: true  // 1リール目のみの特殊条件
+    },
+    REPLAY: {
+      icon: '🔵',
+      prize: 3,
+      probability: 1/6,
+      sound: playReplaySound,
+      message: '🔵🔵🔵 (リプレイ)',
+      isReplay: true
+    },
+    BLANK: {
+      icon: '➖',
+      prize: 0,
+      probability: 0,  // 残りの確率
+      sound: null,
+      message: null
+    }
+  };
+
+  // リールの配列を定義
   const symbols = [
-    ['🍒', '🍉', '🔵', '🔔', '➖', '㊗️', '🍉', '🔵', '🔔', '📼', '🍒', '🍉', '🔵', '🔔', '➖', '➖', '🍉', '🔵', '🔔', '➖'],  // リール1
-    ['➖', '🍒', '🔔', '🔵', '🍉', '㊗️', '🍒', '🔔', '🔵', '🍒', '➖', '🍒', '🔔', '🔵', '🍉', '📼', '🍒', '🔔', '🔵', '➖'],  // リール2
-    ['🍉', '➖', '🔔', '🔵', '📼', '㊗️', '➖', '🔔', '🔵', '🍒', '🍉', '➖', '🔔', '🔵', '🍒', '🍉', '➖', '🔔', '🔵', '🍒']   // リール3
+    [SYMBOLS.CHERRY.icon, SYMBOLS.WATERMELON.icon, SYMBOLS.BELL.icon, SYMBOLS.BAR.icon, SYMBOLS.SEVEN.icon, SYMBOLS.WATERMELON.icon, SYMBOLS.BELL.icon, SYMBOLS.BAR.icon, SYMBOLS.REPLAY.icon, SYMBOLS.CHERRY.icon, SYMBOLS.WATERMELON.icon, SYMBOLS.BELL.icon, SYMBOLS.BAR.icon, SYMBOLS.BLANK.icon, SYMBOLS.BLANK.icon, SYMBOLS.WATERMELON.icon, SYMBOLS.BELL.icon, SYMBOLS.BAR.icon, SYMBOLS.BLANK.icon],
+    [SYMBOLS.BLANK.icon, SYMBOLS.CHERRY.icon, SYMBOLS.BAR.icon, SYMBOLS.BELL.icon, SYMBOLS.WATERMELON.icon, SYMBOLS.SEVEN.icon, SYMBOLS.CHERRY.icon, SYMBOLS.BAR.icon, SYMBOLS.BELL.icon, SYMBOLS.CHERRY.icon, SYMBOLS.BLANK.icon, SYMBOLS.CHERRY.icon, SYMBOLS.BAR.icon, SYMBOLS.BELL.icon, SYMBOLS.WATERMELON.icon, SYMBOLS.REPLAY.icon, SYMBOLS.CHERRY.icon, SYMBOLS.BAR.icon, SYMBOLS.BELL.icon],
+    [SYMBOLS.WATERMELON.icon, SYMBOLS.BLANK.icon, SYMBOLS.BAR.icon, SYMBOLS.BELL.icon, SYMBOLS.REPLAY.icon, SYMBOLS.SEVEN.icon, SYMBOLS.BLANK.icon, SYMBOLS.BAR.icon, SYMBOLS.BELL.icon, SYMBOLS.CHERRY.icon, SYMBOLS.WATERMELON.icon, SYMBOLS.BLANK.icon, SYMBOLS.BAR.icon, SYMBOLS.BELL.icon, SYMBOLS.CHERRY.icon, SYMBOLS.WATERMELON.icon, SYMBOLS.BLANK.icon, SYMBOLS.BAR.icon, SYMBOLS.BELL.icon]
   ];
   const symbolsExtended = symbols.map(reel => [...reel, ...reel, ...reel]); // 各リールを3倍の長さにする
 
@@ -173,22 +229,23 @@ const PachinkoSlot = () => {
     // 乱数を生成して当選役を決定
     const random = Math.random();
     let targetSymbols;
+    let currentProb = 0;
 
-    if (random < 1/200) { // 7 (1/200)
-      targetSymbols = ['㊗️', '㊗️', '㊗️'];
-    } else if (random < 1/200 + 1/100) { // BAR (1/100)
-      targetSymbols = ['📼', '📼', '📼'];
-    } else if (random < 1/200 + 1/100 + 1/20) { // ベル (1/20)
-      targetSymbols = ['🔔', '🔔', '🔔'];
-    } else if (random < 1/200 + 1/100 + 1/20 + 1/40) { // スイカ (1/40)
-      targetSymbols = ['🍉', '🍉', '🍉'];
-    } else if (random < 1/200 + 1/100 + 1/20 + 1/40 + 1/40) { // チェリー (1/40)
-      targetSymbols = ['🍒', symbols[1][0], symbols[2][0]]; // 1リール目のみチェリー
-    } else if (random < 1/200 + 1/100 + 1/20 + 1/40 + 1/40 + 1/6) { // リプレイ (1/6)
-      targetSymbols = ['🔵', '🔵', '🔵'];
-    } else {
-      // はずれ
-      targetSymbols = ['➖', '➖', '➖'];
+    for (const symbol of Object.values(SYMBOLS)) {
+      currentProb += symbol.probability;
+      if (random < currentProb) {
+        if (symbol.singleReel) {
+          targetSymbols = [symbol.icon, symbols[1][0], symbols[2][0]];
+        } else {
+          targetSymbols = [symbol.icon, symbol.icon, symbol.icon];
+        }
+        break;
+      }
+    }
+
+    // はずれの場合
+    if (!targetSymbols) {
+      targetSymbols = [SYMBOLS.BLANK.icon, SYMBOLS.BLANK.icon, SYMBOLS.BLANK.icon];
     }
 
     // 各リールで目標のシンボルの位置を探す
@@ -271,35 +328,26 @@ const PachinkoSlot = () => {
 
     [topValues, centerValues, bottomValues].forEach((line, index) => {
       const position = index === 0 ? '上段' : index === 1 ? '中段' : '下段';
-      if (line.every(val => val === '㊗️')) {
-        totalPrize += 300;
-        playSevenSound();
-        newWinningLines.push(`${position}: ㊗️㊗️㊗️ (+300)`);
-      } else if (line.every(val => val === '📼')) {
-        totalPrize += 100;
-        playBarSound();
-        newWinningLines.push(`${position}: 📼📼📼 (+100)`);
-      } else if (line.every(val => val === '🔔')) {
-        totalPrize += 15;
-        playBellSound();
-        newWinningLines.push(`${position}: 🔔🔔🔔 (+15)`);
-      } else if (line.every(val => val === '🍉')) {
-        totalPrize += 8;
-        playWatermelonSound();
-        newWinningLines.push(`${position}: 🍉🍉🍉 (+8)`);
-      } else if (line.every(val => val === '🔵')) {
-        setCoins(prev => prev + 3);
-        playReplaySound();
-        newWinningLines.push(`${position}: 🔵🔵�� (リプレイ)`);
+
+      for (const symbol of Object.values(SYMBOLS)) {
+        if (symbol === SYMBOLS.CHERRY) {
+          // チェリーの特殊処理
+          if (line[0] === symbol.icon) {
+            totalPrize += symbol.prize;
+            symbol.sound?.();
+            newWinningLines.push(`${position}: ${symbol.message}`);
+          }
+        } else if (line.every(val => val === symbol.icon)) {
+          if (symbol.isReplay) {
+            setCoins(prev => prev + symbol.prize);
+          } else {
+            totalPrize += symbol.prize;
+          }
+          symbol.sound?.();
+          newWinningLines.push(`${position}: ${symbol.message}`);
+        }
       }
     });
-
-    // チェリー役の確認（1リール目のみ）
-    if ([topValues[0], centerValues[0], bottomValues[0]].includes('🍒')) {
-      totalPrize += 4;
-      playCherry();
-      newWinningLines.push(`チェリー: 🍒 (+4)`);
-    }
 
     if (totalPrize > 0 || newWinningLines.length > 0) {
       setWinningLines(newWinningLines);
