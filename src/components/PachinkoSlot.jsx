@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const PachinkoSlot = () => {
   const [reels, setReels] = useState([0, 0, 0]);
-  const [spinning, setSpinning] = useState(false);
+  const [spinning, setSpinning] = useState([false, false, false]);
   const [coins, setCoins] = useState(1000);
   const [win, setWin] = useState(0);
+  const [spinIntervals, setSpinIntervals] = useState([null, null, null]);
 
   const symbols = ['🍒', '🎰', '💎', '７', '🔔', '⭐'];
 
@@ -14,27 +15,33 @@ const PachinkoSlot = () => {
     if (coins < 100) return;
 
     setCoins(prev => prev - 100);
-    setSpinning(true);
+    setSpinning([true, true, true]);
     setWin(0);
 
-    // 各リールの停止タイミングをずらす
-    const stopTimes = [1000, 1500, 2000];
-    const newReels = [...reels];
-
-    stopTimes.forEach((time, index) => {
-      const spinInterval = setInterval(() => {
-        newReels[index] = Math.floor(Math.random() * symbols.length);
-        setReels([...newReels]);
+    const newIntervals = reels.map((_, index) => {
+      return setInterval(() => {
+        setReels(prev => {
+          const newReels = [...prev];
+          newReels[index] = Math.floor(Math.random() * symbols.length);
+          return newReels;
+        });
       }, 50);
-
-      setTimeout(() => {
-        clearInterval(spinInterval);
-        if (index === 2) {
-          setSpinning(false);
-          checkWin(newReels);
-        }
-      }, time);
     });
+
+    setSpinIntervals(newIntervals);
+  };
+
+  const stopReel = (index) => {
+    if (!spinning[index]) return;
+
+    clearInterval(spinIntervals[index]);
+    const newSpinning = [...spinning];
+    newSpinning[index] = false;
+    setSpinning(newSpinning);
+
+    if (!newSpinning.some(s => s)) {
+      checkWin(reels);
+    }
   };
 
   const checkWin = (finalReels) => {
@@ -70,15 +77,24 @@ const PachinkoSlot = () => {
 
           <div className="flex gap-2 p-4 bg-gray-800 rounded-lg">
             {reels.map((reelPos, index) => (
-              <div
-                key={index}
-                className="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-4xl"
-                style={{
-                  transition: 'transform 0.05s',
-                  transform: spinning ? 'translateY(-2px)' : 'none'
-                }}
-              >
-                {symbols[reelPos]}
+              <div key={index} className="flex flex-col gap-2">
+                <div
+                  className="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-4xl"
+                  style={{
+                    transition: 'transform 0.05s',
+                    transform: spinning[index] ? 'translateY(-2px)' : 'none'
+                  }}
+                >
+                  {symbols[reelPos]}
+                </div>
+                <Button
+                  onClick={() => stopReel(index)}
+                  disabled={!spinning[index]}
+                  className="w-full"
+                  size="sm"
+                >
+                  停止 {index + 1}
+                </Button>
               </div>
             ))}
           </div>
@@ -91,7 +107,7 @@ const PachinkoSlot = () => {
 
           <Button
             onClick={spinReel}
-            disabled={spinning || coins < 100}
+            disabled={spinning.some(s => s) || coins < 100}
             className="w-full"
           >
             スピン (100コイン)
