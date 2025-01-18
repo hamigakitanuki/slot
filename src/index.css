@@ -102,11 +102,21 @@ code {
   position: absolute;
   display: flex;
   flex-direction: column;
-  transition: transform 0.5s ease-out;
+  transition: transform 0.05s linear;
 }
 
 .reel-symbols.spinning {
   transition: none;
+  animation: spin 0.5s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-384px); /* シンボルの高さ(64px) × シンボル数(6) */
+  }
 }
 
 .symbol {

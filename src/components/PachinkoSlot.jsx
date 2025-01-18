@@ -9,6 +9,57 @@ const PachinkoSlot = () => {
   const [win, setWin] = useState(0);
   const [spinIntervals, setSpinIntervals] = useState([null, null, null]);
   const [positions, setPositions] = useState([0, 0, 0]);
+  const [audioContext, setAudioContext] = useState(null);
+
+  // 効果音の初期化
+  useEffect(() => {
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    setAudioContext(context);
+  }, []);
+
+  const playSpinSound = () => {
+    if (!audioContext) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 200;
+    gainNode.gain.value = 0.1;
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+    setTimeout(() => oscillator.stop(), 100);
+  };
+
+  const playStopSound = () => {
+    if (!audioContext) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.type = 'square';
+    oscillator.frequency.value = 440;
+    gainNode.gain.value = 0.05;
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+    setTimeout(() => oscillator.stop(), 50);
+  };
+
+  const playWinSound = () => {
+    if (!audioContext) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 880;
+    gainNode.gain.value = 0.1;
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(1320, audioContext.currentTime + 0.1);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+    setTimeout(() => oscillator.stop(), 300);
+  };
 
   const symbols = ['🍒', '🎰', '💎', '７', '🔔', '⭐'];
   const symbolsExtended = [...symbols, ...symbols, ...symbols, ...symbols]; // 4倍の長さの配列を作成
@@ -16,9 +67,11 @@ const PachinkoSlot = () => {
   const spinReel = () => {
     if (coins < 100) return;
 
+    playSpinSound();
     setCoins(prev => prev - 100);
     setSpinning([true, true, true]);
     setWin(0);
+    setPositions([0, 0, 0]);
 
     const newIntervals = reels.map((_, index) => {
       let pos = 0;
@@ -35,8 +88,17 @@ const PachinkoSlot = () => {
     setSpinIntervals(newIntervals);
   };
 
+  /**
+   * スピンを停止する
+   *
+   * スピンを停止したときに、シンボルの位置をランダムに設定する
+   * @param {*} index
+   * @returns
+   */
   const stopReel = (index) => {
     if (!spinning[index]) return;
+
+    playStopSound();
 
     clearInterval(spinIntervals[index]);
     const finalPosition = Math.floor(Math.random() * symbols.length);
@@ -86,6 +148,7 @@ const PachinkoSlot = () => {
     if (totalPrize > 0) {
       setCoins(prev => prev + totalPrize);
       setWin(totalPrize);
+      playWinSound();
     }
   };
 
@@ -106,7 +169,7 @@ const PachinkoSlot = () => {
                   <div
                     className={`reel-symbols ${spinning[index] ? 'spinning' : ''}`}
                     style={{
-                      transform: `translateY(-${positions[index] * 64}px)`
+                      transform: spinning[index] ? undefined : `translateY(-${positions[index] * 64}px)`
                     }}
                   >
                     {symbolsExtended.map((symbol, symIndex) => (
