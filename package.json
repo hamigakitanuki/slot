@@ -4,17 +4,21 @@
   "private": true,
   "homepage": "https://hamigakitanuki.github.io/slot/",
   "dependencies": {
+    "@radix-ui/react-slot": "^1.1.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "cra-template": "1.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-scripts": "5.0.1",
+    "tailwind-merge": "^2.6.0",
     "web-vitals": "^4.2.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject",
     "deploy": "gh-pages -d build",
     "predeploy": "npm run build"
   },
@@ -37,6 +41,11 @@
     ]
   },
   "devDependencies": {
-    "gh-pages": "^6.3.0"
+    "autoprefixer": "^10.4.20",
+    "customize-cra": "^1.0.0",
+    "gh-pages": "^6.3.0",
+    "postcss": "^8.5.1",
+    "react-app-rewired": "^2.2.1",
+    "tailwindcss": "^3.4.17"
   }
 }
