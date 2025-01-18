@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import FloatingText from './FloatingText';
 
 const PachinkoSlot = () => {
   const [reels, setReels] = useState([0, 0, 0]);
@@ -10,6 +11,10 @@ const PachinkoSlot = () => {
   const [spinIntervals, setSpinIntervals] = useState([null, null, null]);
   const [positions, setPositions] = useState([0, 0, 0]);
   const [audioContext, setAudioContext] = useState(null);
+  const [floatingPrizes, setFloatingPrizes] = useState([]);
+  const [floatingWin, setFloatingWin] = useState(null);
+  const [winningLines, setWinningLines] = useState([]);
+  const [targetPositions, setTargetPositions] = useState([0, 0, 0]);
 
   // 効果音の初期化
   useEffect(() => {
@@ -165,10 +170,38 @@ const PachinkoSlot = () => {
     setWin(0);
     setPositions([0, 0, 0]);
 
+    // 乱数を生成して当選役を決定
+    const random = Math.random();
+    let targetSymbols;
+
+    if (random < 1/200) { // 7 (1/200)
+      targetSymbols = ['㊗️', '㊗️', '㊗️'];
+    } else if (random < 1/200 + 1/100) { // BAR (1/100)
+      targetSymbols = ['📼', '📼', '📼'];
+    } else if (random < 1/200 + 1/100 + 1/20) { // ベル (1/20)
+      targetSymbols = ['🔔', '🔔', '🔔'];
+    } else if (random < 1/200 + 1/100 + 1/20 + 1/40) { // スイカ (1/40)
+      targetSymbols = ['🍉', '🍉', '🍉'];
+    } else if (random < 1/200 + 1/100 + 1/20 + 1/40 + 1/40) { // チェリー (1/40)
+      targetSymbols = ['🍒', symbols[1][0], symbols[2][0]]; // 1リール目のみチェリー
+    } else if (random < 1/200 + 1/100 + 1/20 + 1/40 + 1/40 + 1/6) { // リプレイ (1/6)
+      targetSymbols = ['🔵', '🔵', '🔵'];
+    } else {
+      // はずれ
+      targetSymbols = ['➖', '➖', '➖'];
+    }
+
+    // 各リールで目標のシンボルの位置を探す
+    const newTargetPositions = symbols.map((reel, i) => {
+      const targetIndex = reel.findIndex(symbol => symbol === targetSymbols[i]);
+      return targetIndex >= 0 ? targetIndex : Math.floor(Math.random() * reel.length);
+    });
+
+    setTargetPositions(newTargetPositions);
+
     const newIntervals = reels.map((_, index) => {
       let pos = 0;
       return setInterval(() => {
-        // リール毎に異なる速度を設定
         const speed = index === 0 ? 1 : 0.5;
         pos = (pos + speed) % (symbols.length * 3);
         setPositions(prev => {
@@ -193,9 +226,15 @@ const PachinkoSlot = () => {
     if (!spinning[index]) return;
 
     playStopSound();
-
     clearInterval(spinIntervals[index]);
-    const finalPosition = Math.floor(Math.random() * symbols.length);
+
+    // 現在の位置から最も近い目標位置を計算
+    const currentPos = positions[index] % symbols[index].length;
+    const targetPos = targetPositions[index];
+
+    // 目標位置までの距離を計算
+    let finalPosition = targetPos;
+
     const newReels = [...reels];
     newReels[index] = finalPosition;
     setReels(newReels);
@@ -217,6 +256,7 @@ const PachinkoSlot = () => {
 
   const checkWin = (finalReels) => {
     let totalPrize = 0;
+    const newWinningLines = [];
 
     // 中央ラインのチェック
     const centerValues = finalReels.map((index, reelIndex) => symbols[reelIndex][index]);
@@ -229,34 +269,48 @@ const PachinkoSlot = () => {
       symbols[reelIndex][(index + 1) % symbols[reelIndex].length]
     );
 
+    [topValues, centerValues, bottomValues].forEach((line, index) => {
+      const position = index === 0 ? '上段' : index === 1 ? '中段' : '下段';
+      if (line.every(val => val === '㊗️')) {
+        totalPrize += 300;
+        playSevenSound();
+        newWinningLines.push(`${position}: ㊗️㊗️㊗️ (+300)`);
+      } else if (line.every(val => val === '📼')) {
+        totalPrize += 100;
+        playBarSound();
+        newWinningLines.push(`${position}: 📼📼📼 (+100)`);
+      } else if (line.every(val => val === '🔔')) {
+        totalPrize += 15;
+        playBellSound();
+        newWinningLines.push(`${position}: 🔔🔔🔔 (+15)`);
+      } else if (line.every(val => val === '🍉')) {
+        totalPrize += 8;
+        playWatermelonSound();
+        newWinningLines.push(`${position}: 🍉🍉🍉 (+8)`);
+      } else if (line.every(val => val === '🔵')) {
+        setCoins(prev => prev + 3);
+        playReplaySound();
+        newWinningLines.push(`${position}: 🔵🔵�� (リプレイ)`);
+      }
+    });
+
     // チェリー役の確認（1リール目のみ）
     if ([topValues[0], centerValues[0], bottomValues[0]].includes('🍒')) {
       totalPrize += 4;
       playCherry();
+      newWinningLines.push(`チェリー: 🍒 (+4)`);
     }
 
-    [topValues, centerValues, bottomValues].forEach(line => {
-      if (line.every(val => val === '㊗️')) {
-        totalPrize += 300;
-        playSevenSound();
-      } else if (line.every(val => val === '📼')) {
-        totalPrize += 100;
-        playBarSound();
-      } else if (line.every(val => val === '🔔')) {
-        totalPrize += 15;
-        playBellSound();
-      } else if (line.every(val => val === '🍉')) {
-        totalPrize += 8;
-        playWatermelonSound();
-      } else if (line.every(val => val === '🔵')) {
-        setCoins(prev => prev + 3); // リプレイの場合は3コインを返却
-        playReplaySound();
-      }
-    });
-
-    if (totalPrize > 0) {
+    if (totalPrize > 0 || newWinningLines.length > 0) {
+      setWinningLines(newWinningLines);
       setCoins(prev => prev + totalPrize);
       setWin(totalPrize);
+      setFloatingWin(totalPrize);
+      setTimeout(() => {
+        setFloatingWin(null);
+      }, 2000);
+    } else {
+      setWinningLines([]);
     }
   };
 
@@ -287,7 +341,11 @@ const PachinkoSlot = () => {
       <CardContent>
         <div className="flex flex-col items-center gap-4">
           <div className="text-xl">コイン: {coins}</div>
-          {win > 0 && <div className="text-xl text-yellow-500">当たり！ +{win}コイン</div>}
+          {floatingWin && (
+            <div className="floating-win">
+              当たり！ +{floatingWin}コイン
+            </div>
+          )}
 
           <div className="text-sm text-gray-500 mb-2">
             スペースキー: スピン開始<br/>
@@ -346,6 +404,29 @@ const PachinkoSlot = () => {
             🍒: 4コイン（1リール目のみ）
             <br />
             🔵🔵🔵: リプレイ
+          </div>
+
+          {floatingPrizes.map(prize => (
+            <FloatingText
+              key={prize.id}
+              text={prize.amount}
+              onComplete={() => {
+                setFloatingPrizes(prev => prev.filter(p => p.id !== prize.id));
+              }}
+            />
+          ))}
+
+          <div className="fixed right-4 top-4 w-64 bg-white p-4 rounded-lg shadow-lg">
+            <h3 className="text-lg font-bold mb-2">当選履歴</h3>
+            {winningLines.length > 0 ? (
+              <ul className="text-left">
+                {winningLines.map((line, index) => (
+                  <li key={index} className="mb-1">{line}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500">はずれ</p>
+            )}
           </div>
         </div>
       </CardContent>
