@@ -61,8 +61,8 @@ const PachinkoSlot = () => {
     setTimeout(() => oscillator.stop(), 300);
   };
 
-  const symbols = ['🍒', '🎰', '💎', '７', '🔔', '⭐'];
-  const symbolsExtended = [...symbols, ...symbols, ...symbols, ...symbols]; // 4倍の長さの配列を作成
+  const symbols = ['㊗️', '📼', '🍒', '🍉', '🔔', '🔵', '➖'];
+  const symbolsExtended = [...symbols, ...symbols, ...symbols]; // 3倍の長さの配列を作成
 
   const spinReel = () => {
     if (coins < 100) return;
@@ -132,16 +132,18 @@ const PachinkoSlot = () => {
     const bottomValues = finalReels.map(index => symbols[(index + 1) % symbols.length]);
 
     [topValues, centerValues, bottomValues].forEach(line => {
-      if (line.every(val => val === '７')) {
+      if (line.every(val => val === '㊗️')) {
         totalPrize += 5000;
-      } else if (line.every(val => val === '💎')) {
+      } else if (line.every(val => val === '📼')) {
         totalPrize += 2000;
       } else if (line.every(val => val === '🔔')) {
         totalPrize += 1000;
-      } else if (line.every(val => val === '⭐')) {
+      } else if (line.every(val => val === '🍉')) {
         totalPrize += 500;
       } else if (line.every(val => val === '🍒')) {
         totalPrize += 200;
+      } else if (line.every(val => val === '🔵')) {
+        setCoins(prev => prev + 100); // リプレイの場合はコインを返却
       }
     });
 
@@ -227,15 +229,17 @@ const PachinkoSlot = () => {
           <div className="text-sm text-gray-500">
             配当表:
             <br />
-            777: 5000コイン
+            ㊗️㊗️㊗️: 5000コイン
             <br />
-            💎💎💎: 2000コイン
+            📼 📼 📼: 2000コイン
             <br />
             🔔🔔🔔: 1000コイン
             <br />
-            ⭐⭐⭐: 500コイン
+            🍉🍉🍉: 500コイン
             <br />
             🍒🍒🍒: 200コイン
+            <br />
+            🔵🔵🔵: リプレイ
           </div>
         </div>
       </CardContent>

@@ -115,7 +115,7 @@ code {
     transform: translateY(0);
   }
   to {
-    transform: translateY(-384px); /* シンボルの高さ(64px) × シンボル数(6) */
+    transform: translateY(-448px); /* シンボルの高さ(64px) × シンボル数(7) */
   }
 }
 
