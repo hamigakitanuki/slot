@@ -61,18 +61,106 @@ const PachinkoSlot = () => {
     setTimeout(() => oscillator.stop(), 300);
   };
 
+  const playSevenSound = () => {
+    if (!audioContext) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 880;
+    gainNode.gain.value = 0.1;
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(1320, audioContext.currentTime + 0.1);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+    setTimeout(() => oscillator.stop(), 300);
+  };
+
+  const playBarSound = () => {
+    if (!audioContext) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.type = 'square';
+    oscillator.frequency.value = 440;
+    gainNode.gain.value = 0.1;
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(660, audioContext.currentTime + 0.1);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+    setTimeout(() => oscillator.stop(), 200);
+  };
+
+  const playBellSound = () => {
+    if (!audioContext) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 1760;
+    gainNode.gain.value = 0.1;
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+    setTimeout(() => oscillator.stop(), 100);
+  };
+
+  const playWatermelonSound = () => {
+    if (!audioContext) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.type = 'triangle';
+    oscillator.frequency.value = 523.25;
+    gainNode.gain.value = 0.1;
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+    setTimeout(() => oscillator.stop(), 150);
+  };
+
+  const playCherry = () => {
+    if (!audioContext) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 659.25;
+    gainNode.gain.value = 0.1;
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.08);
+    setTimeout(() => oscillator.stop(), 80);
+  };
+
+  const playReplaySound = () => {
+    if (!audioContext) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 440;
+    gainNode.gain.value = 0.1;
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+    setTimeout(() => oscillator.stop(), 50);
+  };
+
   const symbols = [
     ['🍒', '🍉', '🔵', '🔔', '➖', '㊗️', '🍉', '🔵', '🔔', '📼', '🍒', '🍉', '🔵', '🔔', '➖', '➖', '🍉', '🔵', '🔔', '➖'],  // リール1
     ['➖', '🍒', '🔔', '🔵', '🍉', '㊗️', '🍒', '🔔', '🔵', '🍒', '➖', '🍒', '🔔', '🔵', '🍉', '📼', '🍒', '🔔', '🔵', '➖'],  // リール2
-    ['🍉', '➖', '🔔', '🔵', '📼', '㊗️', '➖', '🔔', '🔵', '🍒', '🍉', '➖', '🔔', '🔵', '🍒', '🍉', '➖', '🔔', '��', '🍒']   // リール3
+    ['🍉', '➖', '🔔', '🔵', '📼', '㊗️', '➖', '🔔', '🔵', '🍒', '🍉', '➖', '🔔', '🔵', '🍒', '🍉', '➖', '🔔', '🔵', '🍒']   // リール3
   ];
   const symbolsExtended = symbols.map(reel => [...reel, ...reel, ...reel]); // 各リールを3倍の長さにする
 
   const spinReel = () => {
-    if (coins < 100) return;
+    if (coins < 3) return;
 
     playSpinSound();
-    setCoins(prev => prev - 100);
+    setCoins(prev => prev - 3);
     setSpinning([true, true, true]);
     setWin(0);
     setPositions([0, 0, 0]);
@@ -131,32 +219,44 @@ const PachinkoSlot = () => {
     let totalPrize = 0;
 
     // 中央ラインのチェック
-    const centerValues = finalReels.map(index => symbols[index]);
+    const centerValues = finalReels.map((index, reelIndex) => symbols[reelIndex][index]);
     // 上ラインのチェック
-    const topValues = finalReels.map(index => symbols[(index - 1 + symbols.length) % symbols.length]);
+    const topValues = finalReels.map((index, reelIndex) =>
+      symbols[reelIndex][(index - 1 + symbols[reelIndex].length) % symbols[reelIndex].length]
+    );
     // 下ラインのチェック
-    const bottomValues = finalReels.map(index => symbols[(index + 1) % symbols.length]);
+    const bottomValues = finalReels.map((index, reelIndex) =>
+      symbols[reelIndex][(index + 1) % symbols[reelIndex].length]
+    );
+
+    // チェリー役の確認（1リール目のみ）
+    if ([topValues[0], centerValues[0], bottomValues[0]].includes('🍒')) {
+      totalPrize += 4;
+      playCherry();
+    }
 
     [topValues, centerValues, bottomValues].forEach(line => {
       if (line.every(val => val === '㊗️')) {
-        totalPrize += 5000;
+        totalPrize += 300;
+        playSevenSound();
       } else if (line.every(val => val === '📼')) {
-        totalPrize += 2000;
+        totalPrize += 100;
+        playBarSound();
       } else if (line.every(val => val === '🔔')) {
-        totalPrize += 1000;
+        totalPrize += 15;
+        playBellSound();
       } else if (line.every(val => val === '🍉')) {
-        totalPrize += 500;
-      } else if (line.every(val => val === '🍒')) {
-        totalPrize += 200;
+        totalPrize += 8;
+        playWatermelonSound();
       } else if (line.every(val => val === '🔵')) {
-        setCoins(prev => prev + 100); // リプレイの場合はコインを返却
+        setCoins(prev => prev + 3); // リプレイの場合は3コインを返却
+        playReplaySound();
       }
     });
 
     if (totalPrize > 0) {
       setCoins(prev => prev + totalPrize);
       setWin(totalPrize);
-      playWinSound();
     }
   };
 
@@ -226,24 +326,24 @@ const PachinkoSlot = () => {
 
           <Button
             onClick={spinReel}
-            disabled={spinning.some(s => s) || coins < 100}
+            disabled={spinning.some(s => s) || coins < 3}
             className="w-full"
           >
-            スピン (100コイン)
+            スピン (3コイン)
           </Button>
 
           <div className="text-sm text-gray-500">
             配当表:
             <br />
-            ㊗️㊗️㊗️: 5000コイン
+            ㊗️㊗️㊗️: 300コイン
             <br />
-            📼 📼 📼: 2000コイン
+            📼 📼 📼: 100コイン
             <br />
-            🔔🔔🔔: 1000コイン
+            🔔🔔🔔: 15コイン
             <br />
-            🍉🍉🍉: 500コイン
+            🍉🍉🍉: 8コイン
             <br />
-            🍒🍒🍒: 200コイン
+            🍒: 4コイン（1リール目のみ）
             <br />
             🔵🔵🔵: リプレイ
           </div>
