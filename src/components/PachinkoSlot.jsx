@@ -152,6 +152,25 @@ const PachinkoSlot = () => {
     }
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.code === 'Space') {
+        event.preventDefault(); // スクロール防止
+        if (!spinning.some(s => s)) {
+          spinReel();
+        }
+      } else if (event.key >= '1' && event.key <= '3') {
+        const index = parseInt(event.key) - 1;
+        if (spinning[index]) {
+          stopReel(index);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [spinning]); // spinning の状態を依存配列に追加
+
   return (
     <Card className="w-96">
       <CardHeader>
@@ -160,6 +179,12 @@ const PachinkoSlot = () => {
       <CardContent>
         <div className="flex flex-col items-center gap-4">
           <div className="text-xl">コイン: {coins}</div>
+          {win > 0 && <div className="text-xl text-yellow-500">当たり！ +{win}コイン</div>}
+
+          <div className="text-sm text-gray-500 mb-2">
+            スペースキー: スピン開始<br/>
+            1,2,3キー: 各リール停止
+          </div>
 
           <div className="flex gap-2 p-4 bg-gray-800 rounded-lg">
             {reels.map((_, index) => (
@@ -190,12 +215,6 @@ const PachinkoSlot = () => {
               </div>
             ))}
           </div>
-
-          {win > 0 && (
-            <div className="text-xl text-green-500">
-              WIN! +{win}コイン
-            </div>
-          )}
 
           <Button
             onClick={spinReel}
