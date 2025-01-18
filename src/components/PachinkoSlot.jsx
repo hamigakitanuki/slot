@@ -61,8 +61,12 @@ const PachinkoSlot = () => {
     setTimeout(() => oscillator.stop(), 300);
   };
 
-  const symbols = ['㊗️', '📼', '🍒', '🍉', '🔔', '🔵', '➖'];
-  const symbolsExtended = [...symbols, ...symbols, ...symbols]; // 3倍の長さの配列を作成
+  const symbols = [
+    ['🍒', '🍉', '🔵', '🔔', '➖', '㊗️', '🍉', '🔵', '🔔', '📼', '🍒', '🍉', '🔵', '🔔', '➖', '➖', '🍉', '🔵', '🔔', '➖'],  // リール1
+    ['➖', '🍒', '🔔', '🔵', '🍉', '㊗️', '🍒', '🔔', '🔵', '🍒', '➖', '🍒', '🔔', '🔵', '🍉', '📼', '🍒', '🔔', '🔵', '➖'],  // リール2
+    ['🍉', '➖', '🔔', '🔵', '📼', '㊗️', '➖', '🔔', '🔵', '🍒', '🍉', '➖', '🔔', '🔵', '🍒', '🍉', '➖', '🔔', '��', '🍒']   // リール3
+  ];
+  const symbolsExtended = symbols.map(reel => [...reel, ...reel, ...reel]); // 各リールを3倍の長さにする
 
   const spinReel = () => {
     if (coins < 100) return;
@@ -76,7 +80,9 @@ const PachinkoSlot = () => {
     const newIntervals = reels.map((_, index) => {
       let pos = 0;
       return setInterval(() => {
-        pos = (pos + 1) % (symbols.length * 3);
+        // リール毎に異なる速度を設定
+        const speed = index === 0 ? 1 : 0.5;
+        pos = (pos + speed) % (symbols.length * 3);
         setPositions(prev => {
           const newPos = [...prev];
           newPos[index] = pos;
@@ -199,7 +205,7 @@ const PachinkoSlot = () => {
                       transform: spinning[index] ? undefined : `translateY(-${positions[index] * 64}px)`
                     }}
                   >
-                    {symbolsExtended.map((symbol, symIndex) => (
+                    {symbolsExtended[index].map((symbol, symIndex) => (
                       <div key={symIndex} className="symbol">
                         {symbol}
                       </div>
