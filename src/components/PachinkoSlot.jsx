@@ -8,8 +8,10 @@ const PachinkoSlot = () => {
   const [coins, setCoins] = useState(1000);
   const [win, setWin] = useState(0);
   const [spinIntervals, setSpinIntervals] = useState([null, null, null]);
+  const [positions, setPositions] = useState([0, 0, 0]);
 
   const symbols = ['🍒', '🎰', '💎', '７', '🔔', '⭐'];
+  const symbolsExtended = [...symbols, ...symbols, ...symbols, ...symbols]; // 4倍の長さの配列を作成
 
   const spinReel = () => {
     if (coins < 100) return;
@@ -19,11 +21,13 @@ const PachinkoSlot = () => {
     setWin(0);
 
     const newIntervals = reels.map((_, index) => {
+      let pos = 0;
       return setInterval(() => {
-        setReels(prev => {
-          const newReels = [...prev];
-          newReels[index] = Math.floor(Math.random() * symbols.length);
-          return newReels;
+        pos = (pos + 1) % (symbols.length * 3);
+        setPositions(prev => {
+          const newPos = [...prev];
+          newPos[index] = pos;
+          return newPos;
         });
       }, 50);
     });
@@ -35,34 +39,53 @@ const PachinkoSlot = () => {
     if (!spinning[index]) return;
 
     clearInterval(spinIntervals[index]);
+    const finalPosition = Math.floor(Math.random() * symbols.length);
+    const newReels = [...reels];
+    newReels[index] = finalPosition;
+    setReels(newReels);
+
     const newSpinning = [...spinning];
     newSpinning[index] = false;
     setSpinning(newSpinning);
 
+    setPositions(prev => {
+      const newPos = [...prev];
+      newPos[index] = finalPosition;
+      return newPos;
+    });
+
     if (!newSpinning.some(s => s)) {
-      checkWin(reels);
+      checkWin(newReels);
     }
   };
 
   const checkWin = (finalReels) => {
-    const values = finalReels.map(index => symbols[index]);
-    let prize = 0;
+    let totalPrize = 0;
 
-    if (values.every(val => val === '７')) {
-      prize = 5000;
-    } else if (values.every(val => val === '💎')) {
-      prize = 2000;
-    } else if (values.every(val => val === '🔔')) {
-      prize = 1000;
-    } else if (values.every(val => val === '⭐')) {
-      prize = 500;
-    } else if (values.every(val => val === '🍒')) {
-      prize = 200;
-    }
+    // 中央ラインのチェック
+    const centerValues = finalReels.map(index => symbols[index]);
+    // 上ラインのチェック
+    const topValues = finalReels.map(index => symbols[(index - 1 + symbols.length) % symbols.length]);
+    // 下ラインのチェック
+    const bottomValues = finalReels.map(index => symbols[(index + 1) % symbols.length]);
 
-    if (prize > 0) {
-      setCoins(prev => prev + prize);
-      setWin(prize);
+    [topValues, centerValues, bottomValues].forEach(line => {
+      if (line.every(val => val === '７')) {
+        totalPrize += 5000;
+      } else if (line.every(val => val === '💎')) {
+        totalPrize += 2000;
+      } else if (line.every(val => val === '🔔')) {
+        totalPrize += 1000;
+      } else if (line.every(val => val === '⭐')) {
+        totalPrize += 500;
+      } else if (line.every(val => val === '🍒')) {
+        totalPrize += 200;
+      }
+    });
+
+    if (totalPrize > 0) {
+      setCoins(prev => prev + totalPrize);
+      setWin(totalPrize);
     }
   };
 
@@ -76,16 +99,22 @@ const PachinkoSlot = () => {
           <div className="text-xl">コイン: {coins}</div>
 
           <div className="flex gap-2 p-4 bg-gray-800 rounded-lg">
-            {reels.map((reelPos, index) => (
+            {reels.map((_, index) => (
               <div key={index} className="flex flex-col gap-2">
-                <div
-                  className="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-4xl"
-                  style={{
-                    transition: 'transform 0.05s',
-                    transform: spinning[index] ? 'translateY(-2px)' : 'none'
-                  }}
-                >
-                  {symbols[reelPos]}
+                <div className="reel-container h-48">
+                  <div className="absolute top-1/3 left-0 right-0 h-16 border-y-2 border-yellow-400 pointer-events-none" />
+                  <div
+                    className={`reel-symbols ${spinning[index] ? 'spinning' : ''}`}
+                    style={{
+                      transform: `translateY(-${positions[index] * 64}px)`
+                    }}
+                  >
+                    {symbolsExtended.map((symbol, symIndex) => (
+                      <div key={symIndex} className="symbol">
+                        {symbol}
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <Button
                   onClick={() => stopReel(index)}

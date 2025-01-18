@@ -89,3 +89,31 @@ code {
     monospace;
 }
 
+.reel-container {
+  position: relative;
+  width: 64px;
+  height: 192px; /* 3マス分の高さ */
+  overflow: hidden;
+  background: white;
+  border-radius: 0.5rem;
+}
+
+.reel-symbols {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.5s ease-out;
+}
+
+.reel-symbols.spinning {
+  transition: none;
+}
+
+.symbol {
+  height: 64px;
+  width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+}
